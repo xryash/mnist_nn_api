@@ -6,8 +6,6 @@ from tensorflow.examples.tutorials.mnist import input_data
 from PIL import Image
 from flask_app.mnist_nn import MnistNeuralNetwork
 import numpy as np
-import matplotlib.pyplot as plt
-
 
 app = Flask(__name__)
 
@@ -48,7 +46,7 @@ def compute_accuracy():
 def get_image():
     id = request.args.get('id', 100)
     filename = 'buff.jpg'
-    data = mnist.test.images[int(id)].reshape(28, 28) * 255
+    data = datasets.test.images[int(id)].reshape(28, 28) * 255
     Image.fromarray(data).convert("RGB").save(filename)
     with open(filename, 'rb') as bites:
         return send_file(
