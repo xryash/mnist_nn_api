@@ -19,6 +19,6 @@ Args:
 batch_size - images list size for computing accuracy, 100 by default.
 
 GET
-/dataset/image/ - to get
+/dataset/image/ - to get images.
 Args:
 id - image number, 100 by default.
