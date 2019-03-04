@@ -33,7 +33,7 @@ def train_model():
 @app.route('/model/predict', methods=['POST'])
 def predict():
     file = request.files['image']
-    file_name = file.filename
+    file_name = 'predict.jpg'
     file.save(file_name)
 
     pil_im = Image.open(file_name)
