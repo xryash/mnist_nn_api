@@ -1,6 +1,6 @@
 import io
 
-from flask import Flask, send_file, request
+from flask import Flask, send_file, request, render_template
 
 from tensorflow.examples.tutorials.mnist import input_data
 from PIL import Image
@@ -32,7 +32,19 @@ def train_model():
 
 @app.route('/model/predict', methods=['POST'])
 def predict():
-    pass
+    file = request.files['image']
+    file_name = file.filename
+    file.save(file_name)
+
+    pil_im = Image.open(file_name)
+    pix = np.array(pil_im.getdata()).reshape(pil_im.size[0], pil_im.size[1]).astype('uint8') / 255
+    result = net.predict(pix.reshape(1, 784))
+    return str(result)
+
+
+@app.route('/model/page', methods=['GET'])
+def page():
+    return render_template('upload.html')
 
 
 @app.route('/model/accuracy', methods=['GET'])
@@ -47,7 +59,7 @@ def get_image():
     id = request.args.get('id', 100)
     filename = 'buff.jpg'
     data = datasets.test.images[int(id)].reshape(28, 28) * 255
-    Image.fromarray(data).convert("RGB").save(filename)
+    Image.fromarray(data).convert("L").save(filename)
     with open(filename, 'rb') as bites:
         return send_file(
                      io.BytesIO(bites.read()),
@@ -58,5 +70,7 @@ def get_image():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
+
+
 
 
