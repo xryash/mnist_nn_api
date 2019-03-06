@@ -1,24 +1,29 @@
 import gzip
+import os
+
 import numpy as np
 import tensorflow as tf
 
+
+MODEL_REPLICA_PATH = 'tmp/model.ckpt'
+
+
+def index(array, item):
+    for num, val in np.ndenumerate(array):
+        if val == item:
+            return num[0]
+
+
 class MnistNeuralNetwork(object):
-    def __init__(self, test_data, train_data):
+    def __init__(self, test_data, train_data, working_folder):
         self.test_data = test_data
         self.train_data = train_data
         self._learning = False
+        self.working_folder = working_folder
 
     @property
     def learning(self):
         return self._learning
-
-
-
-    @staticmethod
-    def index(array, item):
-        for num, val in np.ndenumerate(array):
-            if val == item:
-                return num[0]
 
 
     @staticmethod
@@ -127,11 +132,13 @@ class MnistNeuralNetwork(object):
                 y: self.test_data.labels[:10000]}))
 
             #save model
-            save_path = saver.save(session, "tmp/model.ckpt")
+            path = os.path.join(self.working_folder, MODEL_REPLICA_PATH)
+            save_path = saver.save(session, path)
             print("Model saved in path: %s" % save_path)
 
         session.close()
         self._learning = False
+
 
     def predict(self, images):
 
@@ -158,8 +165,9 @@ class MnistNeuralNetwork(object):
         with tf.Session() as session:
             session.run(tf.global_variables_initializer())
 
-            saver.restore(session, "tmp/model.ckpt")
-            print("Model loaded")
+            path = os.path.join(self.working_folder, MODEL_REPLICA_PATH)
+            saver.restore(session, path)
+            print('Model loaded: {}'.format(path))
 
             print('Predicts')
             for image in images:
@@ -171,14 +179,14 @@ class MnistNeuralNetwork(object):
 
                 max_value = max(result[0])
 
-                pred = MnistNeuralNetwork.index(result[0], max_value)
+                pred = index(result[0], max_value)
 
                 print((max_value, pred))
-                print()
                 predicts.append([max_value, pred])
 
         session.close()
         return predicts
+
 
     def compute_accuracy(self, batch_size):
         images_batch = self.test_data.images[:batch_size]
@@ -187,11 +195,11 @@ class MnistNeuralNetwork(object):
         accuracy = 0
         for i in range(len(predicts)):
             predict_class = predicts[i][1]
-            label_class = MnistNeuralNetwork.index(labels_batch[i], 1)
+            label_class = index(labels_batch[i], 1)
             if predict_class is label_class:
                     accuracy += 1
-        result = '{0} / {1}'.format( accuracy, len(predicts))
+        result = '{0} / {1}'.format(accuracy, len(predicts))
         print(result)
         percents = accuracy / len(predicts) * 100
         print('{}%'.format(percents))
-        return '{0}, accuracy = {1}'.format(result, percents)
+        return '{0}, accuracy = {1}%'.format(result, percents)

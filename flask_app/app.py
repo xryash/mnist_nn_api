@@ -1,4 +1,5 @@
 import io
+import os
 
 from flask import Flask, send_file, request, render_template
 
@@ -6,12 +7,21 @@ from tensorflow.examples.tutorials.mnist import input_data
 from PIL import Image
 from flask_app.mnist_nn import MnistNeuralNetwork
 import numpy as np
+import tensorflow as tf
 
 app = Flask(__name__)
 
-datasets = input_data.read_data_sets("data/", one_hot=True)
+app.config.from_object('config.ProductionConfig')
 
-net = MnistNeuralNetwork(datasets.test, datasets.train)
+working_folder = app.config['WORKING_FOLDER']
+
+tf.logging.set_verbosity(tf.logging.ERROR)
+
+datasets = input_data.read_data_sets(os.path.join(working_folder, 'data/'),  one_hot=True)
+
+tf.logging.set_verbosity(tf.logging.INFO)
+
+net = MnistNeuralNetwork(datasets.test, datasets.train, working_folder)
 
 
 @app.route('/', methods=['GET'])
@@ -34,9 +44,10 @@ def train_model():
 def predict():
     file = request.files['image']
     file_name = 'predict.jpg'
-    file.save(file_name)
+    path = os.path.join(working_folder, file_name)
+    file.save(path)
 
-    pil_im = Image.open(file_name)
+    pil_im = Image.open(path)
     pix = np.array(pil_im.getdata()).reshape(pil_im.size[0], pil_im.size[1]).astype('uint8') / 255
     result = net.predict(pix.reshape(1, 784))
     return str(result)
@@ -57,20 +68,18 @@ def compute_accuracy():
 @app.route('/dataset/image/', methods=['GET'])
 def get_image():
     id = request.args.get('id', 100)
-    filename = 'buff.jpg'
+    file_name = 'buff.jpg'
+    path = os.path.join(working_folder, file_name)
+
     data = datasets.test.images[int(id)].reshape(28, 28) * 255
-    Image.fromarray(data).convert("L").save(filename)
-    with open(filename, 'rb') as bites:
+    Image.fromarray(data).convert("L").save(path)
+    with open(path, 'rb') as bites:
         return send_file(
                      io.BytesIO(bites.read()),
-                     attachment_filename=filename,
+                     attachment_filename=file_name,
                      mimetype='image/jpg'
                )
 
-
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
-
-
-
+    app.run(debug=app.config['DEBUG'], host=app.config['HOST'])
 
