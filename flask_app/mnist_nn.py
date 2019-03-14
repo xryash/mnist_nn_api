@@ -42,7 +42,9 @@ class MnistNeuralNetwork(object):
         )
 
 
-    def training(self, learning_rate, iterations):
+    def training(self, learning_rate, iterations, dropout_percent = 0.2):
+        """Train model"""
+
 
         #flag for api
         self._learning = True
@@ -63,6 +65,8 @@ class MnistNeuralNetwork(object):
         # compute layer 1 values by sigmoid (X * W + b)
         values_1 = tf.add(tf.matmul(layer_0, weights_1), bias_1)
         layer_1 = MnistNeuralNetwork.sigmoid(values_1)
+
+        layer_1 = tf.nn.dropout(layer_1, rate=dropout_percent)
 
         # compute layer 2 values exactly as on layer 1
         values_2 = tf.add(tf.matmul(layer_1, weights_2), bias_2)
@@ -141,7 +145,7 @@ class MnistNeuralNetwork(object):
 
 
     def predict(self, images):
-
+        """Show predictions for some images"""
         layer_0 = tf.placeholder(tf.float32, [None, 784])
 
         nodes = 40
@@ -181,7 +185,6 @@ class MnistNeuralNetwork(object):
 
                 pred = index(result[0], max_value)
 
-                print((max_value, pred))
                 predicts.append([max_value, pred])
 
         session.close()
@@ -189,6 +192,7 @@ class MnistNeuralNetwork(object):
 
 
     def compute_accuracy(self, batch_size):
+        """Compute accuracy for particular images batch"""
         images_batch = self.test_data.images[:batch_size]
         labels_batch = self.test_data.labels[:batch_size]
         predicts = self.predict(images_batch)
