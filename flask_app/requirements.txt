@@ -15,7 +15,7 @@ Keras-Preprocessing==1.0.9
 Markdown==3.0.1
 MarkupSafe==1.1.0
 mock==2.0.0
-numpy==1.16.1
+numpy==1.22.0
 pbr==5.1.2
 pi==0.1.2
 pip-autoremove==0.9.1
